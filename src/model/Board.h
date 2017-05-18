@@ -30,7 +30,7 @@ public:
 	{
 	public:
 		Card card;
-		std::list<Node*> nodes_to_unlock;
+		std::list<size_t> node_ids_to_unlock;
 	};
 
 	Node content[size];
@@ -40,21 +40,21 @@ private:
 	{
 		// Begin.
 
-		content[i++].nodes_to_unlock.push_back (&content[t]);
+		content[i++].node_ids_to_unlock.push_back (t);
 
 		// Body.
 
 		for (size_t body = 0; body < n_body; ++body)
 		{
-			std::list<Node*>& ntu = content[i++].nodes_to_unlock;
+			std::list<size_t>& ntu = content[i++].node_ids_to_unlock;
 
-			ntu.push_back (&content[t++]);
-			ntu.push_back (&content[t]);
+			ntu.push_back (t++);
+			ntu.push_back (t);
 		}
 
 		// End.
 
-		content[i++].nodes_to_unlock.push_back (&content[t++]);
+		content[i++].node_ids_to_unlock.push_back (t++);
 	}
 
 	void gen_dependencies (void)
