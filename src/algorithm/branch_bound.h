@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <functional>
 #include <queue>
 #include <utility>
@@ -11,74 +12,77 @@
 /**
  * @brief Branch and bound algorithm.
  * @param  _node First node.
- * @return  Pair of search status and final node.
+ * @return  Final node.
  */
 template
 	<typename Node>
-std::pair<bool, Node> branch_bound (Node _node)
+std::shared_ptr<Node> branch_bound (std::shared_ptr<Node> _node)
 {
 	using cost_type = typename Node::cost_type;
 	
-	return branch_bound<Node> (_node, std::greater<cost_type> ());
+	return branch_bound (_node, std::greater<cost_type> ());
 }
 
 /**
  * @brief Branch and bound algorithm with compare function.
  * @param  _node First node.
  * @param  _comp Compare function.
- * @return  Pair of search status and final node.
+ * @return  Final node.
  */
 template
 	<typename Node,
 	 class Compare>
-std::pair<bool, Node> branch_bound (Node _node, Compare _comp)
+std::shared_ptr<Node> branch_bound (std::shared_ptr<Node> _node, Compare _comp)
 {
-	class node_wrapper
+	class cost_compare
 	{
 	public:
-		using cost_type = typename Node::cost_type;
+		cost_compare (Compare _comp)
+			: compare (_comp) {}
+	
+		bool operator()
+			(std::shared_ptr<Node> _lhs, std::shared_ptr<Node> _rhs) const
+		{ return compare (_lhs->cost (), _rhs->cost ()); }
 		
-		node_wrapper (Node _node)
-			: node (_node) {}
-		
-		operator cost_type (void) const
-		{ return node.cost (); }
-		
-		Node node;
+	private:
+		Compare compare;
 	};
 	
-	std::priority_queue<node_wrapper, std::vector<node_wrapper>, Compare> tasks;
-
-	bool is_not_ok = true;
-	Node candidate;
+	cost_compare comp (_comp);
+	std::priority_queue
+		<std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>,
+		 cost_compare> tasks (_comp);
 	
-	size_t active_node = 0;
-
 	tasks.push (_node);
 
+	std::shared_ptr<Node> candidate;
+	
 	while (!tasks.empty ())
 	{
-		Node task = tasks.top ().node;
+		std::shared_ptr<Node> task = tasks.top ();
 		tasks.pop ();
 		
-		active_node++;
+		//std::cout << ++i << std::endl;
+		//std::cout << *task << std::endl;
 		
-		// Do not compare if candidate node is not ok.
+		// Do not compare if candidate node is not exist yet.
 
-		if (is_not_ok || !_comp (task.cost (), candidate.cost ()))
+		if (!candidate || !_comp (task->cost (), candidate->cost ()))
 		{
-			if (task)
-			{
-				is_not_ok = false;
+			if (task->goal ())
 				candidate = task;
-			}
 
-			for (Node child : task.childs ())
-				tasks.push (node_wrapper (child));
+			size_t j = 0;
+			
+			for (std::shared_ptr<Node> child : task->childs (task))
+			{
+				tasks.push (child);
+				++j;
+			}
+			
+			//std::cout << "Childs: " << j << std::endl;
 		}
 	}
-	
-	std::cout << "Active node: " << active_node << std::endl;
 
-	return std::make_pair (!is_not_ok, candidate);
+	return candidate;
 }
