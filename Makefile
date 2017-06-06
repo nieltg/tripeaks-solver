@@ -1,4 +1,4 @@
-# Makefile by @nieltg
+# Makefile by nieltg, Daniel
 
 # Places
 
@@ -32,8 +32,8 @@ endif
 CC_ARG_PRE := -Wall $(if $(DEBUG),-ggdb,-O2)
 CC_ARG_POS := -I$(SRC_DIR)
 
-LD := clang++ $(CC_ARG_PRE)
-CC := clang++ $(CC_ARG_PRE) -std=c++11 -c
+LD := g++ $(CC_ARG_PRE)
+CC := g++ $(CC_ARG_PRE) -std=c++11 -c
 
 # Targets
 
